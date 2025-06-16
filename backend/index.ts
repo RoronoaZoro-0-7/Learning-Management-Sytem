@@ -4,6 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import connectDB from './config/db';
 import errors from './middleware/error';
+import userRoutes from './routes/userRoutes';
 
 dotenv.config();
 const app = express();
@@ -15,6 +16,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(errors);
+
+// routes
+app.use("api/v1",userRoutes);
 
 app.get("/test", (req: Request, res: Response , next: NextFunction) => {
     res.status(200).json({

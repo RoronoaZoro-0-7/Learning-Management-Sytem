@@ -21,7 +21,7 @@ interface IRegistrationBody {
 const register = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { name, email, password } = req.body;
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({ email: email });
         if (existingUser) {
             return next(new ErrorHandler("User already exist", 400));
         }
@@ -32,26 +32,39 @@ const register = CatchAsyncError(async (req: Request, res: Response, next: NextF
         }
         const activationtoken = activationToken(user);
         const activationCode = activationtoken.activationCode;
+        console.log(`SMTP Password is: "${process.env.SMTP_PASSWORD}"`);
+
+        // return res.status(201).json({
+        //     success:true,
+        //     activationtoken
+        // })
         const data = {
             user: { name: user.name },
             activationCode
         }
-        const html = await ejs.renderFile(path.join(__dirname, "../mails/activation-mail.ejs"), data);
         try {
+            const __dirname = "D:/Projects/LMS/backend";
+            console.log(__dirname);
+
+            const html = await ejs.renderFile(path.join(__dirname, "/mails/activation-mail.ejs"), data);
+
             await sendMail({
                 email: user.email,
                 subject: "Activate your account",
                 template: "activation-mail.ejs",
                 data
-            })
-            res.status(201).json({
-                success: true,
-                message: `Check your email : ${user.email} to activate your account`,
-                activationToken: activationtoken.token
-            })
-        } catch (error: any) {
-            return new ErrorHandler(error.message, 400);
+            });
+        } catch (err: any) {
+            console.error("Failed to send email:", err.message);
+            return next(new ErrorHandler("Email sending failed: " + err.message, 500));
         }
+
+        res.status(201).json({
+            success: true,
+            message: `Check your email : ${user.email} to activate your account`,
+            activationToken: activationtoken.token,
+        });
+
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));
     }

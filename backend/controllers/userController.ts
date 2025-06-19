@@ -34,10 +34,6 @@ const register = CatchAsyncError(async (req: Request, res: Response, next: NextF
         const activationCode = activationtoken.activationCode;
         console.log(`SMTP Password is: "${process.env.SMTP_PASSWORD}"`);
 
-        // return res.status(201).json({
-        //     success:true,
-        //     activationtoken
-        // })
         const data = {
             user: { name: user.name },
             activationCode
@@ -90,4 +86,46 @@ const activationToken = (user: any): IActivationToken => {
     return { token, activationCode };
 }
 
-export default { register, activationToken };
+interface IActivationRequest {
+    activation_token: string;
+    activation_code: string;
+}
+
+const activateUser = CatchAsyncError(
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { activation_token, activation_code } =
+                req.body as IActivationRequest;
+
+            const newUser: { user: IUser; activationCode: string } = jwt.verify(
+                activation_token,
+                process.env.ACTIVATION_SECRET as Secret
+            ) as { user: IUser; activationCode: string };
+
+            if (newUser.activationCode !== activation_code) {
+                return next(new ErrorHandler("Invalid activation code", 400));
+            }
+
+            const { name, email, password } = newUser.user;
+
+            const existUser = await User.findOne({ email });
+
+            if (existUser) {
+                return next(new ErrorHandler("User already exist", 400));
+            }
+            const user = await User.create({
+                name,
+                email,
+                password
+            });
+            res.status(201).json({
+                success: true,
+
+            })
+        } catch (error: any) {
+            return next(new ErrorHandler(error.message, 400));
+        }
+    }
+);
+
+export default { register, activationToken, activateUser };

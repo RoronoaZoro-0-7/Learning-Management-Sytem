@@ -1,9 +1,14 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 import bcrypt from "bcryptjs";
+import dotenv from "dotenv";
+import jwt, { Secret } from "jsonwebtoken";
+
+dotenv.config();
 
 const emailRegexPattern: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export interface IUser extends Document {
+  _id:Types.ObjectId;
   name: string;
   email: string;
   password: string;
@@ -15,6 +20,8 @@ export interface IUser extends Document {
   isVerified: boolean;
   courses: Array<{ courseId: string }>;
   comparePassword: (password: string) => Promise<boolean>;
+  SignAccessToken:() => string;
+  SignRefreshToken:() => string
 }
 
 const userSchema: Schema<IUser> = new mongoose.Schema(
@@ -63,6 +70,7 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
   }
 );
 
+// encrypt password
 userSchema.pre<IUser>("save", async function (next) {
   if (!this.isModified("password")) {
     return next();
@@ -72,6 +80,17 @@ userSchema.pre<IUser>("save", async function (next) {
   next();
 });
 
+// sign access token
+userSchema.methods.SignAccessToken = function(){
+  return jwt.sign({id:this.id},process.env.ACCESS_SECRET as Secret,{expiresIn:"15d"})
+}
+
+// sign refresh token
+userSchema.methods.SignRefreshToken = function(){
+  return jwt.sign({id:this.id},process.env.REFRESH_TOKEN as Secret,{expiresIn:"7d"})
+}
+
+// compare password during login
 userSchema.methods.comparePassword = async function (password: string): Promise<boolean> {
   return bcrypt.compare(password, this.password);
 };

@@ -8,6 +8,7 @@ import ejs from 'ejs';
 import path from 'path';
 import dotenv from 'dotenv';
 import sendToken from "../utils/jwt";
+import redis from "../utils/redis";
 
 dotenv.config();
 
@@ -155,6 +156,12 @@ const login = CatchAsyncError(async (req: Request, res: Response, next: NextFunc
 })
 
 const logout = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+
+    if (!req.user) {
+        return next(new ErrorHandler("User not authenticated", 401));
+    }
+
+    await redis.del(req.user._id.toString());
     res.cookie("access_token", "", {
         httpOnly: true,
         expires: new Date(0),

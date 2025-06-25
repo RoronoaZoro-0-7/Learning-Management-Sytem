@@ -9,6 +9,8 @@ import path from 'path';
 import dotenv from 'dotenv';
 import sendToken from "../utils/jwt";
 import redis from "../utils/redis";
+import userService from "../services/userService";
+import { cp } from "fs";
 
 dotenv.config();
 
@@ -182,4 +184,89 @@ const logout = CatchAsyncError(async (req: Request, res: Response, next: NextFun
     });
 });
 
-export default { register, activationToken, activateUser, login, logout };
+// get user info
+const getUserInfo = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?._id;
+
+    if (!userId) {
+        return next(new ErrorHandler("User ID not found", 401));
+    }
+
+    const user = await userService.getUserById(userId.toString());
+
+    if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+    }
+
+    res.status(200).json({
+        success: true,
+        user,
+    });
+});
+
+interface ISocialAuthBody {
+    email: string;
+    name: string;
+    avatar: string
+}
+
+const socialAuth = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email, name, avatar } = req.body;
+        const user = await User.findOne({ email });
+        if (!user) {
+            const newUser = await User.create({
+                name,
+                email,
+                avatar
+            });
+            sendToken(newUser, 200, res);
+        }
+        else {
+            sendToken(user, 200, res);
+        }
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
+
+// update user info
+interface IUpdateUserInfo {
+    name?: string;
+    email?: string;
+}
+
+const updateUserInfo = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { name, email } = req.body;
+        const userId = req.user?._id;
+        if (!userId) {
+            return next(new ErrorHandler("User ID not found", 401));
+        }
+        const user = await User.findById(userId);
+        if (email && user) {
+            const isEmailExist = await User.findOne({ email });
+            if (isEmailExist) {
+                return next(new ErrorHandler("Email already exist", 400));
+            }
+            user.email = email;
+        }
+        if (name && user) {
+            user.name = name;
+        }
+        await user?.save();
+        if (user) {
+            req.user = user;
+        }
+
+        await redis.set(userId.toString(), JSON.stringify(user));
+        res.status(201).json({
+            success: true,
+            user
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+export default { register, activationToken, activateUser, login, logout, getUserInfo, socialAuth, updateUserInfo };

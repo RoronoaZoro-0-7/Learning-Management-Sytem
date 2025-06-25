@@ -6,7 +6,7 @@ import { Response } from "express";
 
 dotenv.config();
 
-interface ITokenOptions {
+export interface ITokenOptions {
     expires: Date;
     maxAge: number;
     httpOnly: boolean;
@@ -19,7 +19,7 @@ const sendToken = (user: IUser, statusCode: number, res: Response) => {
     const refreshToken = user.SignRefreshToken();
 
     // upload session to redis
-    redis.set(user.id, JSON.stringify(user));
+    redis.set(user._id.toString(), JSON.stringify(user));
 
     // parse enviroment variables to integrates with fallback values
     const accessTokenExpire = parseInt(process.env.ACCESS_TOKEN_EXPIRE || '300', 10);
@@ -27,14 +27,14 @@ const sendToken = (user: IUser, statusCode: number, res: Response) => {
 
     // options for cookies
     const accessTokenOptions: ITokenOptions = {
-        expires: new Date(Date.now() + accessTokenExpire * 1000),
+        expires: new Date(Date.now() + accessTokenExpire * 60 * 60 * 1000),
         maxAge: accessTokenExpire * 1000,
         httpOnly: true,
         sameSite: 'lax',
     };
 
     const refreshTokenOptions: ITokenOptions = {
-        expires: new Date(Date.now() + refreshTokenExpire * 1000),
+        expires: new Date(Date.now() + refreshTokenExpire * 60 * 60 * 1000),
         maxAge: refreshTokenExpire * 1000,
         httpOnly: true,
         sameSite: 'lax',

@@ -66,7 +66,7 @@ export const updateAccessToken = CatchAsyncError(
 
       // Completed line: parse the session data, assuming it's a JSON string
       const user = JSON.parse(session);
-      const accesstoken = jwt.sign({ id: user._id }, process.env.ACCESS_SECRET as Secret, { expiresIn: "2d" });
+      const accesstoken = jwt.sign({ id: user._id }, process.env.ACCESS_SECRET as Secret, { expiresIn: "120d" });
       const refreshtoken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN as Secret, { expiresIn: "120d" });
 
       // parse enviroment variables to integrates with fallback values

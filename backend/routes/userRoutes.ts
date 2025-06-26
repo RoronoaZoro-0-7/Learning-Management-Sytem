@@ -12,5 +12,7 @@ route.get("/refresh-token", updateAccessToken);
 route.get("/me",isAuthenticated, user.getUserInfo);
 route.post("/social-auth", user.socialAuth);
 route.put("/update-user",isAuthenticated,user.updateUserInfo);
+route.put("/update-password",isAuthenticated,user.updateUserPassword);
+route.put("/update-profile-picture",isAuthenticated,user.updateProfilePicture);
 
 export default route;

@@ -81,7 +81,7 @@ userSchema.pre<IUser>("save", async function (next) {
 
 // sign access token
 userSchema.methods.SignAccessToken = function(){
-  return jwt.sign({id:this.id},process.env.ACCESS_SECRET as Secret,{expiresIn:"2d"})
+  return jwt.sign({id:this.id},process.env.ACCESS_SECRET as Secret,{expiresIn:"120d"})
 }
 
 // sign refresh token

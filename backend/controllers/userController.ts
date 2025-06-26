@@ -10,7 +10,7 @@ import dotenv from 'dotenv';
 import sendToken from "../utils/jwt";
 import redis from "../utils/redis";
 import userService from "../services/userService";
-import { cp } from "fs";
+import cloudinary from "cloudinary";
 
 dotenv.config();
 
@@ -258,7 +258,6 @@ const updateUserInfo = CatchAsyncError(async (req: Request, res: Response, next:
         if (user) {
             req.user = user;
         }
-
         await redis.set(userId.toString(), JSON.stringify(user));
         res.status(201).json({
             success: true,
@@ -269,4 +268,80 @@ const updateUserInfo = CatchAsyncError(async (req: Request, res: Response, next:
     }
 })
 
-export default { register, activationToken, activateUser, login, logout, getUserInfo, socialAuth, updateUserInfo };
+// update user password
+const updateUserPassword = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+        if (!oldPassword || !newPassword) {
+            return next(new ErrorHandler("Password is required", 400));
+        }
+
+        const userId = req.user?._id;
+        if (!userId) {
+            return next(new ErrorHandler("User ID not found", 401));
+        }
+        const user = await User.findById(userId).select("+password");
+        if (!user) {
+            return next(new ErrorHandler("User not found", 404));
+        }
+        if (!user.comparePassword(oldPassword)) {
+            return next(new ErrorHandler("Old password is incorrect", 400));
+        }
+        user.password = newPassword;
+        await user.save();
+        await redis.set(userId.toString(), JSON.stringify(user));
+        res.status(200).json({
+            success: true,
+            message: "Password updated successfully"
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+interface IUpdateProfilePicture {
+    avatar: string;
+}
+
+// update profile picture
+const updateProfilePicture = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { avatar } = req.body;
+        if (!avatar) {
+            return next(new ErrorHandler("Avatar is required", 400));
+        }
+
+        const userId = req.user?._id;
+        if (!userId) {
+            return next(new ErrorHandler("User ID not found", 401));
+        }
+        const user = await User.findById(userId);
+        if (!user) {
+            return next(new ErrorHandler("User not found", 404));
+        }
+
+        if (user.avatar?.public_id) {
+            await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+        }
+
+        const myCloud = await cloudinary.v2.uploader.upload(avatar, {
+            folder: "avatars",
+            width: 150,
+        })
+        user.avatar = {
+            public_id: myCloud.public_id,
+            url: myCloud.secure_url,
+        }
+        await user.save();
+        await redis.set(user._id.toString(), JSON.stringify(user));
+        res.status(200).json({
+            success: true,
+            message: "Profile picture updated successfully",
+            user
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+export default { register, activationToken, activateUser, login, logout, getUserInfo, socialAuth, updateUserInfo, updateUserPassword, updateProfilePicture };

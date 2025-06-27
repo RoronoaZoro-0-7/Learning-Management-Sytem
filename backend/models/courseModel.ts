@@ -131,5 +131,5 @@ const courseSchema = new Schema<ICourse>({
     },
 });
 
-const Course : Model<ICourse> = mongoose.model<ICourse>("Course", courseSchema);
+const Course: Model<ICourse> = mongoose.model<ICourse>("Course", courseSchema);
 export default Course;

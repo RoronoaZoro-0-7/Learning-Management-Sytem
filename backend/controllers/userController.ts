@@ -11,6 +11,7 @@ import sendToken from "../utils/jwt";
 import redis from "../utils/redis";
 import userService from "../services/userService";
 import cloudinary from "cloudinary";
+import { log } from "console";
 
 dotenv.config();
 
@@ -140,6 +141,8 @@ interface loginRequest {
 const login = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { email, password } = req.body;
+        console.log(email, password);
+        
         if (!email || !password) {
             return next(new ErrorHandler("Please enter email and password", 400));
         }
@@ -147,10 +150,14 @@ const login = CatchAsyncError(async (req: Request, res: Response, next: NextFunc
         if (!user) {
             return next(new ErrorHandler("Invalid email or password", 400));
         }
+        console.log(user);
+        
         const isPasswordMatched = await user.comparePassword(password);
         if (!isPasswordMatched) {
             return next(new ErrorHandler("Invalid email or password", 400));
         }
+        console.log(isPasswordMatched);
+        
         sendToken(user, 200, res);
     } catch (error: any) {
         return new ErrorHandler(error.message, 400);

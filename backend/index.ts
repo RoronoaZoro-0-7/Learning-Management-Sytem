@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import connectDB from './config/db';
 import errors from './middleware/error';
 import userRoutes from './routes/userRoutes';
+import courseRoutes from "./routes/courseRoutes"
 import { v2 as cloudinary } from "cloudinary";
 
 dotenv.config();
@@ -29,6 +30,7 @@ app.use(errors);
 
 // routes
 app.use("/api/v1",userRoutes);
+app.use("/api/v1/course",courseRoutes);
 
 app.get("/test", (req: Request, res: Response , next: NextFunction) => {
     res.status(200).json({

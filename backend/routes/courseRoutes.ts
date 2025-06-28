@@ -18,4 +18,10 @@ route.put('/add-question', isAuthenticated,
     course.addQuestion);
 route.put('/add-answer', isAuthenticated,
     course.addAnswer);
+route.put("/add-review/:id", isAuthenticated,
+    course.addReview);
+
+route.put('/add-review-reply',isAuthenticated,
+    authorizeRoles("admin"),
+    course.addReplyToReview);
 export default route;

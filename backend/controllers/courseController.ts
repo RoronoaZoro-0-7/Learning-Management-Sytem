@@ -259,4 +259,91 @@ const addAnswer = CatchAsyncError(async (req: Request, res: Response, next: Next
 	}
 });
 
-export default { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseByUser, addQuestion, addAnswer };
+// add review
+const addReview = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		if (!req.user) {
+			return next(new ErrorHandler("User not authenticated", 401));
+		}
+		const courses = req.user.courses;
+		if (!courses || courses.length === 0) {
+			return res.status(202).json({
+				success: false,
+				message: "No courses found"
+			});
+		}
+		const courseId = req.params.id;
+		if (!courseId) {
+			return next(new ErrorHandler("Course ID is required", 400));
+		}
+		const courseExists = courses.some((course: any) => course._id.toString() === courseId.toString());
+		if (!courseExists) {
+			return next(new ErrorHandler("You have not purchased this course", 403));
+		}
+		const course = await Course.findById(courseId);
+		if (!course) {
+			return next(new ErrorHandler("Course not found", 404));
+		}
+		const { review, rating } = req.body;
+		if (!review || !rating) {
+			return next(new ErrorHandler("Review and rating are required", 400));
+		}
+		const reviewData: any = {
+			user: req.user,
+			rating,
+			comment: review
+		}
+		course.reviews.push(reviewData);
+		let avg = 0;
+		course.reviews.forEach((rev: any) => {
+			avg += rev.rating;
+		})
+		course.ratings = avg / course.reviews.length;
+		await course.save();
+		const notification = {
+			title: "New Review",
+			message: `You have received a new review on your course ${course.name}`
+		}
+		res.status(201).json({
+			success: true,
+			course,
+		});
+	}
+	catch (error: any) {
+		return next(new ErrorHandler(error.message, 500));
+	}
+});
+
+const addReplyToReview = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const { comment, reviewId, courseId } = req.body;
+		if (!comment || !reviewId || !courseId) {
+			return next(new ErrorHandler("All fields are required", 400));
+		}
+		const course = await Course.findById(courseId);
+		if (!course) {
+			return next(new ErrorHandler("Course not found", 404));
+		}
+		const review = course.reviews.find((rev: any) => rev._id.equals(reviewId));
+		if (!review) {
+			return next(new ErrorHandler("Review not found", 404));
+		}
+		const replyData: any = {
+			user: req.user,
+			comment
+		};
+		if(!review.commentReplies) {
+			review.commentReplies = [];
+		}
+		review.commentReplies.push(replyData);
+		await course.save();
+		res.status(201).json({
+			success: true,
+			course
+		});
+	} catch (error: any) {
+		return next(new ErrorHandler(error.message, 500));
+	}
+});
+
+export default { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseByUser, addQuestion, addAnswer, addReview , addReplyToReview };

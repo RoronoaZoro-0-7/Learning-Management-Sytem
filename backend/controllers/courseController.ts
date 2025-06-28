@@ -4,8 +4,10 @@ import ErrorHandler from "../utils/ErrorHandler";
 import cloudinary from "cloudinary";
 import courseService from "../services/courseService";
 import Course from "../models/courseModel";
-import { get } from "mongoose";
+import mongoose from "mongoose";
 import redis from "../utils/redis";
+import sendMail from "../utils/sendMail";
+import ejs from "ejs";
 
 // upload course
 const uploadCourse = CatchAsyncError(
@@ -156,4 +158,105 @@ const getCourseByUser = CatchAsyncError(async (req: Request, res: Response, next
 	}
 })
 
-export default { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseByUser };
+// add a question
+const addQuestion = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const { question, courseId, contentId } = req.body;
+		if (!question || !courseId || !contentId) {
+			return next(new ErrorHandler("All fields are required", 400));
+		}
+		const course = await Course.findById(courseId);
+		if (!course) {
+			return next(new ErrorHandler("Course not found", 404));
+		}
+		if (!mongoose.Types.ObjectId.isValid(contentId)) {
+			return next(new ErrorHandler("Invalid course ID", 400));
+		}
+		const courseContent = course.courseData?.find((item: any) => item._id.equals(contentId));
+		if (!courseContent) {
+			return next(new ErrorHandler("Course content not found", 404));
+		}
+
+		// create a new question object
+		const newQuestion: any = {
+			user: req.user,
+			question,
+			questionReplies: []
+		}
+		// add this question to the course content
+		courseContent.questions.push(newQuestion);
+		await course?.save();
+		res.status(201).json({
+			success: true,
+			course
+		});
+	}
+	catch (error: any) {
+		return next(new ErrorHandler(error.message, 500));
+
+	}
+});
+
+// reply to the question
+const addAnswer = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const { answer, courseId, contentId, questionId } = req.body;
+		if (!answer || !courseId || !contentId || !questionId) {
+			return next(new ErrorHandler("All fields are required", 400));
+		}
+		const course = await Course.findById(courseId);
+		if (!course) {
+			return next(new ErrorHandler("Course not found", 404));
+		}
+		if (!mongoose.Types.ObjectId.isValid(contentId)) {
+			return next(new ErrorHandler("Invalid course ID", 400));
+		}
+		const courseContent = course.courseData?.find((item: any) => item._id.equals(contentId));
+		if (!courseContent) {
+			return next(new ErrorHandler("Course content not found", 404));
+		}
+		const question = courseContent.questions.find((q: any) => q._id.equals(questionId));
+		if (!question) {
+			return next(new ErrorHandler("Question not found", 404));
+		}
+
+		// create a new answer object
+		const newAnswer: any = {
+			user: req.user,
+			answer
+		}
+		question.questionReplies.push(newAnswer);
+		await course?.save();
+		if (req.user?._id === question.user._id) {
+			// create a notification
+		}
+		else {
+			const data = {
+				name: question.user.name,
+				title: courseContent.title
+			}
+			const __dirname = "D:/Projects/LMS/backend";
+			const html = await ejs.renderFile(__dirname + "/mails/question-reply.ejs", data);
+			try {
+				await sendMail({
+					email: question.user.email,
+					subject: "New reply to your question",
+					template: "question-reply.ejs",
+					data
+				});
+			} catch (error: any) {
+				return next(new ErrorHandler(error.message, 500));
+			}
+		}
+		res.status(201).json({
+			success: true,
+			course
+		});
+	}
+	catch (error: any) {
+		return next(new ErrorHandler(error.message, 500));
+
+	}
+});
+
+export default { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseByUser, addQuestion, addAnswer };

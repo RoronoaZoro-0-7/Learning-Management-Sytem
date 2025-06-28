@@ -11,7 +11,11 @@ route.put('/edit-course/:id', isAuthenticated,
 
 route.get('/get-course/:id', course.getSingleCourse);
 route.get('/get-all-courses', course.getAllCourses);
-route.get('/get-course-content/:id',isAuthenticated,
+route.get('/get-course-content/:id', isAuthenticated,
     course.getCourseByUser);
 
+route.put('/add-question', isAuthenticated,
+    course.addQuestion);
+route.put('/add-answer', isAuthenticated,
+    course.addAnswer);
 export default route;

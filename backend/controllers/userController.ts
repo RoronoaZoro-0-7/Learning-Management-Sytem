@@ -45,8 +45,6 @@ const register = CatchAsyncError(async (req: Request, res: Response, next: NextF
         }
         try {
             const __dirname = "D:/Projects/LMS/backend";
-            console.log(__dirname);
-
             const html = await ejs.renderFile(path.join(__dirname, "/mails/activation-mail.ejs"), data);
 
             await sendMail({

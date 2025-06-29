@@ -236,9 +236,9 @@ const addAnswer = CatchAsyncError(async (req: Request, res: Response, next: Next
 		if (req.user?._id === question.user._id) {
 			// create a notification
 			await Notification.create({
-				user:req.user?._id,
-				title:"New Answer",
-				message:`You have a new answer to your question in ${courseContent.title}`
+				user: req.user?._id,
+				title: "New Answer",
+				message: `You have a new answer to your question in ${courseContent.title}`
 			});
 		}
 		else {
@@ -357,4 +357,14 @@ const addReplyToReview = CatchAsyncError(async (req: Request, res: Response, nex
 	}
 });
 
-export default { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseByUser, addQuestion, addAnswer, addReview, addReplyToReview };
+// get all courses -- only for admin
+const getAllCoursesAdmin = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		courseService.getAllCourses(res);
+	}
+	catch (error: any) {
+		return next(new ErrorHandler(error.message, 500));
+	}
+});
+
+export default { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseByUser, addQuestion, addAnswer, addReview, addReplyToReview, getAllCoursesAdmin };

@@ -9,4 +9,13 @@ const createCourse = async (res: Response, data: any) => {
 	});
 };
 
-export default { createCourse };
+// Function to get all courses
+const getAllCourses = async (res: Response) => {
+	const courses = await Course.find().sort({ createdAt: -1 });
+	res.status(201).json({
+		success: true,
+		courses
+	})
+}
+
+export default { createCourse, getAllCourses };

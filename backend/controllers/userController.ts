@@ -140,7 +140,7 @@ const login = CatchAsyncError(async (req: Request, res: Response, next: NextFunc
     try {
         const { email, password } = req.body;
         console.log(email, password);
-        
+
         if (!email || !password) {
             return next(new ErrorHandler("Please enter email and password", 400));
         }
@@ -149,13 +149,13 @@ const login = CatchAsyncError(async (req: Request, res: Response, next: NextFunc
             return next(new ErrorHandler("Invalid email or password", 400));
         }
         console.log(user);
-        
+
         const isPasswordMatched = await user.comparePassword(password);
         if (!isPasswordMatched) {
             return next(new ErrorHandler("Invalid email or password", 400));
         }
         console.log(isPasswordMatched);
-        
+
         sendToken(user, 200, res);
     } catch (error: any) {
         return new ErrorHandler(error.message, 400);
@@ -349,4 +349,14 @@ const updateProfilePicture = CatchAsyncError(async (req: Request, res: Response,
     }
 })
 
-export default { register, activationToken, activateUser, login, logout, getUserInfo, socialAuth, updateUserInfo, updateUserPassword, updateProfilePicture };
+// get all users - only for admin
+const getAllUsers = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        userService.getAllUsers(res);
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
+
+export default { register, activationToken, activateUser, login, logout, getUserInfo, socialAuth, updateUserInfo, updateUserPassword, updateProfilePicture, getAllUsers };

@@ -12,8 +12,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@types/node-cron": "^3.0.11",
     "cloudinary": "^2.7.0",
     "ejs": "^3.1.10",
+    "node-cron": "^4.1.1",
     "nodemailer": "^7.0.3"
   },
   "devDependencies": {

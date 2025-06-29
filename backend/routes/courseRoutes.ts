@@ -24,4 +24,8 @@ route.put("/add-review/:id", isAuthenticated,
 route.put('/add-review-reply',isAuthenticated,
     authorizeRoles("admin"),
     course.addReplyToReview);
+
+route.get('/get-all-courses-admin', isAuthenticated,
+    authorizeRoles("admin"), course.getAllCoursesAdmin);
+    
 export default route;

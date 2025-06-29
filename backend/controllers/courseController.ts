@@ -4,6 +4,7 @@ import ErrorHandler from "../utils/ErrorHandler";
 import cloudinary from "cloudinary";
 import courseService from "../services/courseService";
 import Course from "../models/courseModel";
+import Notification from "../models/notificationModel";
 import mongoose from "mongoose";
 import redis from "../utils/redis";
 import sendMail from "../utils/sendMail";
@@ -185,6 +186,11 @@ const addQuestion = CatchAsyncError(async (req: Request, res: Response, next: Ne
 		}
 		// add this question to the course content
 		courseContent.questions.push(newQuestion);
+		const notification = await Notification.create({
+			user: req.user?._id,
+			title: "New Question",
+			message: `You have a new question in ${courseContent.title}`,
+		});
 		await course?.save();
 		res.status(201).json({
 			success: true,
@@ -229,6 +235,11 @@ const addAnswer = CatchAsyncError(async (req: Request, res: Response, next: Next
 		await course?.save();
 		if (req.user?._id === question.user._id) {
 			// create a notification
+			await Notification.create({
+				user:req.user?._id,
+				title:"New Answer",
+				message:`You have a new answer to your question in ${courseContent.title}`
+			});
 		}
 		else {
 			const data = {
@@ -332,7 +343,7 @@ const addReplyToReview = CatchAsyncError(async (req: Request, res: Response, nex
 			user: req.user,
 			comment
 		};
-		if(!review.commentReplies) {
+		if (!review.commentReplies) {
 			review.commentReplies = [];
 		}
 		review.commentReplies.push(replyData);
@@ -346,4 +357,4 @@ const addReplyToReview = CatchAsyncError(async (req: Request, res: Response, nex
 	}
 });
 
-export default { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseByUser, addQuestion, addAnswer, addReview , addReplyToReview };
+export default { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseByUser, addQuestion, addAnswer, addReview, addReplyToReview };

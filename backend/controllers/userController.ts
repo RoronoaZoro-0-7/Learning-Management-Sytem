@@ -44,7 +44,7 @@ const register = CatchAsyncError(async (req: Request, res: Response, next: NextF
             activationCode
         }
         try {
-            const __dirname = "D:/Projects/LMS/backend";
+            const __dirname = "D:/Projects/Learning Management System/backend";
             const html = await ejs.renderFile(path.join(__dirname, "/mails/activation-mail.ejs"), data);
 
             await sendMail({

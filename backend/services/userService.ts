@@ -4,7 +4,7 @@ import redis from "../utils/redis";
 
 const getUserById = async (id: string): Promise<IUser | null> => {
     const userJson = await redis.get(id);
-    if(!userJson){
+    if (!userJson) {
         return null;
     }
 
@@ -12,4 +12,13 @@ const getUserById = async (id: string): Promise<IUser | null> => {
     return user;
 };
 
-export default { getUserById };
+// get all users - only for admin
+const getAllUsers = async (res: Response) => {
+    const users = await User.find().sort({ createdAt: -1 });
+    res.status(201).json({
+        success: true,
+        users
+    })
+}
+
+export default { getUserById, getAllUsers };

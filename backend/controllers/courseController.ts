@@ -235,7 +235,7 @@ const addAnswer = CatchAsyncError(async (req: Request, res: Response, next: Next
 				name: question.user.name,
 				title: courseContent.title
 			}
-			const __dirname = "D:/Projects/LMS/backend";
+			const __dirname = "D:/Projects/Learning Management System/backend";
 			const html = await ejs.renderFile(__dirname + "/mails/question-reply.ejs", data);
 			try {
 				await sendMail({

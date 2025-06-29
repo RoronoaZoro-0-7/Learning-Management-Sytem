@@ -24,14 +24,24 @@ const sendMail = async (options: EmailOptions): Promise<void> => {
   });
 
   const { email, subject, template, data } = options;
+  console.log(email, subject, template, data);
 
   // get the path to the email template file
-  const __dirname = "D:/Projects/LMS/backend/mails";
+  const __dirname = "D:/Projects/Learning Management System/backend/mails";
   const templatePath = path.join(__dirname, template);
-  // const templatePath = path.join(__dirname, "../mails", template);
+  console.log("Rendering email from:", templatePath);
 
-  // Render the email template with EJS
-  const html: string = await ejs.renderFile(templatePath, data);
+  let html: string;
+  try {
+    if (template === "order-confirmation.ejs") {
+      html = await ejs.renderFile(templatePath, { order: data });
+    } else {
+      html = await ejs.renderFile(templatePath, data);
+    }
+  } catch (err) {
+    console.error("❌ Error rendering EJS email template:", err);
+    throw new Error("Email template rendering failed");
+  }
 
   const mailOptions = {
     from: process.env.SMTP_MAIL,

@@ -15,5 +15,7 @@ route.put("/update-user", isAuthenticated, user.updateUserInfo);
 route.put("/update-password", isAuthenticated, user.updateUserPassword);
 route.put("/update-profile-picture", isAuthenticated, user.updateProfilePicture);
 route.get("/get-all-users", isAuthenticated, authorizeRoles("admin"), user.getAllUsers);
+route.put("/update-user-role", isAuthenticated, authorizeRoles("admin"), user.updateUserRole);
+route.delete("/delete-user/:id", isAuthenticated, authorizeRoles("admin"), user.deleteUser);
 
 export default route;

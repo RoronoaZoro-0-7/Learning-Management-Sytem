@@ -8,6 +8,7 @@ import userRoutes from './routes/userRoutes';
 import courseRoutes from "./routes/courseRoutes";
 import orderRoutes from "./routes/orderRoutes";
 import notificationRoutes from './routes/notificationRoutes';
+import analyticsRoutes from './routes/analyticsRoutes';
 import { v2 as cloudinary } from "cloudinary";
 
 dotenv.config();
@@ -35,6 +36,7 @@ app.use("/api/v1", userRoutes);
 app.use("/api/v1/course", courseRoutes);
 app.use("/api/v1/order", orderRoutes);
 app.use("/api/v1/notification", notificationRoutes);
+app.use("/api/v1/analytics", analyticsRoutes);
 
 app.get("/test", (req: Request, res: Response, next: NextFunction) => {
     res.status(200).json({

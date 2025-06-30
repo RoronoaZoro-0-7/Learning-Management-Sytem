@@ -21,4 +21,21 @@ const getAllUsers = async (res: Response) => {
     })
 }
 
-export default { getUserById, getAllUsers };
+// update user role - only for admin
+const updateUserRole = async (res: Response, id: string, role: string) => {
+    const user = await User.findByIdAndUpdate(id, { role }, { new: true });
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found"
+        });
+    }
+    await redis.set(id, JSON.stringify(user));
+    res.status(200).json({
+        success: true,
+        message: "User role updated successfully",
+        user
+    });
+};
+
+export default { getUserById, getAllUsers, updateUserRole };

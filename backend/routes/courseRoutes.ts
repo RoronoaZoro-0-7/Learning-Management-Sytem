@@ -27,5 +27,7 @@ route.put('/add-review-reply',isAuthenticated,
 
 route.get('/get-all-courses-admin', isAuthenticated,
     authorizeRoles("admin"), course.getAllCoursesAdmin);
-    
+
+route.delete('/delete-course/:id', isAuthenticated,
+    authorizeRoles("admin"), course.deleteCourse);
 export default route;

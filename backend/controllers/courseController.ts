@@ -367,4 +367,32 @@ const getAllCoursesAdmin = CatchAsyncError(async (req: Request, res: Response, n
 	}
 });
 
-export default { uploadCourse, editCourse, getSingleCourse, getAllCourses, getCourseByUser, addQuestion, addAnswer, addReview, addReplyToReview, getAllCoursesAdmin };
+// delete the course
+const deleteCourse = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const courseId = req.params.id;
+		if (!courseId) {
+			return next(new ErrorHandler("Course ID is required", 400));
+		}
+		const course = await Course.findByIdAndDelete(courseId);
+		if (!course) {
+			return next(new ErrorHandler("Course not found", 404));
+		}
+		await redis.del(courseId);
+
+		res.status(200).json({
+			success: true,
+			message: "Course deleted successfully"
+		});
+
+	}
+	catch (error: any) {
+		return next(new ErrorHandler(error.message, 500));
+	}
+});
+
+export default {
+	uploadCourse, editCourse, getSingleCourse, getAllCourses,
+	getCourseByUser, addQuestion, addAnswer, addReview, addReplyToReview,
+	getAllCoursesAdmin, deleteCourse
+};

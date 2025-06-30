@@ -359,4 +359,46 @@ const getAllUsers = CatchAsyncError(async (req: Request, res: Response, next: Ne
     }
 });
 
-export default { register, activationToken, activateUser, login, logout, getUserInfo, socialAuth, updateUserInfo, updateUserPassword, updateProfilePicture, getAllUsers };
+// update user role --- only for admin
+const updateUserRole = CatchAsyncError(
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { id, role } = req.body;
+            userService.updateUserRole(res, id, role);
+        } catch (error: any) {
+            return next(new ErrorHandler(error.message, 400));
+        }
+    },
+);
+
+// delete user --- only for admin
+const deleteUser = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const id = req.params.id;
+        if (!id) {
+            return next(new ErrorHandler("User ID is required", 400));
+        }
+        const user = await User.findByIdAndDelete(id);
+        if (!user) {
+            return next(new ErrorHandler("User not found", 404));
+        }
+        await redis.del(user._id.toString());
+        if (user.avatar?.public_id) {
+            await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+        }
+        res.status(200).json({
+            success: true,
+            message: "User deleted successfully",
+            user
+        });
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
+
+export default {
+    register, activationToken, activateUser, login, logout, getUserInfo, socialAuth,
+    updateUserInfo, updateUserPassword, updateProfilePicture, getAllUsers,
+    updateUserRole, deleteUser
+};
